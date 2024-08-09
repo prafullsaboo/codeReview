@@ -15,6 +15,9 @@ const config: Config = {
       },
     },
   },
+  colors: {
+    'ED663F': '#ED663F',
+  },
   plugins: [],
 };
 export default config;

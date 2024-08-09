@@ -16,7 +16,8 @@
   }
 }
 
-body {
+/* Define custom class for body styles */
+.body-custom {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
@@ -26,6 +27,7 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+/* Add additional styles as needed */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
