@@ -63,6 +63,9 @@ const Home: React.FC = () => {
   const handleLogout = () => {
       router.push('/login');
   };
+  const handleConfiguration = () => {
+    router.push('/configuration');
+};
 
   return (
     <div className="container mx-auto p-4 text-gray-900 bg-white min-h-screen">
@@ -70,6 +73,9 @@ const Home: React.FC = () => {
         <h1 className="flex justify-center items-center text-2xl font-bold">Frontend Code Review Sheet</h1>
         <button onClick={handleLogout} className="w-1/4 bg-blue-500 text-white rounded hover:bg-blue-700">
           Log out
+        </button>
+        <button onClick={handleConfiguration} className="w-1/4 bg-blue-500 text-white rounded hover:bg-blue-700">
+          Change Configuration
         </button>
       </div>
       <table className="min-w-full bg-white border border-gray-300">
