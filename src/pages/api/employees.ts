@@ -190,20 +190,88 @@ export const employees = [
   },
 ];
 export const projects = [
-    { name: 'Draft', isBigProject: true, noOfReviwersRequirred : 4 },
-    { name: 'Tradeaze', isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Clientshare Premium', isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Clientshare Pulse', isBigProject: false, noOfReviwersRequirred : 3 },
-    { name: 'Governance', isBigProject: true, noOfReviwersRequirred : 2 },
-    { name: 'Lone Design Club', isBigProject: true, noOfReviwersRequirred : 3 },
-    { name: 'Ujji',  isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Platform',  isBigProject: true, noOfReviwersRequirred : 2 },
-    { name: 'Cybaverse',  isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'FNL Helpdesk',  isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Adgreen',  isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Curation',  isBigProject: false, noOfReviwersRequirred : 1 },
-    { name: 'Editorielle',  isBigProject: false,noOfReviwersRequirred : 1 },
-  ];
+  { 
+    name: 'Draft', 
+    isBigProject: true, 
+    noOfReviwersRequirred: 4, 
+    reviewers: ["Priyajit", "Neem", "Ayan", "Sarab"], 
+  },
+  { 
+    name: 'Tradeaze', 
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Nigel"],  
+  },
+  { 
+    name: 'Clientshare Premium', 
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Vishal"], 
+    fixedReviewer: "Vishal", 
+  },
+  { 
+    name: 'Clientshare Pulse', 
+    isBigProject: false, 
+    noOfReviwersRequirred: 3, 
+    reviewers: ["Jay", "Amit"],  
+  },
+  { 
+    name: 'Governance', 
+    isBigProject: true, 
+    noOfReviwersRequirred: 2, 
+    reviewers: ["Tomek", "Praful"], 
+    fixedReviewer: "Tomek", 
+  },
+  { 
+    name: 'Lone Design Club', 
+    isBigProject: true, 
+    noOfReviwersRequirred: 3, 
+    reviewers: ["Charlis", "Sadhna", "Heno"],  
+  },
+  { 
+    name: 'Ujji',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Shivam"],  
+  },
+  { 
+    name: 'Platform',  
+    isBigProject: true, 
+    noOfReviwersRequirred: 2, 
+    reviewers: ["Praful"],  
+  },
+  { 
+    name: 'Cybaverse',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Pallavi"],  
+  },
+  { 
+    name: 'FNL Helpdesk',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Jay"],  
+  },
+  { 
+    name: 'Adgreen',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Rohan"],  
+  },
+  { 
+    name: 'Curation',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Shivam"],  
+  },
+  { 
+    name: 'Editorielle',  
+    isBigProject: false, 
+    noOfReviwersRequirred: 1, 
+    reviewers: ["Neem"],  
+  },
+];
+
 
   export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({ employees, projects });

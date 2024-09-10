@@ -16,6 +16,8 @@ interface Project {
   isBigProject: boolean;
   noOfReviwersRequirred: number; 
   codeReviewers?: string[];
+  fixedReviewer?: string;
+  reviewers?: string[];
 }
 
 interface ProjectsState {
@@ -53,27 +55,42 @@ const projectReviewSlice = createSlice({
       }
     
       // Fixed reviewer assignments
-      const fixedReviewerAssignments: { [key: string]: string } = {
-        "Clientshare Premium": "Vishal",
-        "Governance": "Tomek",
-      };
+      // const fixedReviewerAssignments: { [key: string]: string } = {
+      //   "Clientshare Premium": "Vishal",
+      //   "Governance": "Tomek",
+      // };
     
+      // const assignedReviewers = new Set<string>();
+    
+      // // Assign fixed reviewers first
+      // projects.forEach(project => {
+      //   if (project.name) {
+      //     project.codeReviewers = [];
+    
+      //     // Check if the project has a fixed reviewer
+      //     const fixedReviewer = fixedReviewerAssignments[project.name];
+      //     if (fixedReviewer) {
+      //       project.codeReviewers.push(fixedReviewer);
+      //       reviewers = reviewers.filter(reviewer => reviewer.name !== fixedReviewer);
+      //       assignedReviewers.add(fixedReviewer);
+      //     }
+      //   }
+      // });
+
       const assignedReviewers = new Set<string>();
-    
-      // Assign fixed reviewers first
+
+      // Assign fixed reviewers from project properties
       projects.forEach(project => {
-        if (project.name) {
-          project.codeReviewers = [];
+        project.codeReviewers = [];
     
-          // Check if the project has a fixed reviewer
-          const fixedReviewer = fixedReviewerAssignments[project.name];
-          if (fixedReviewer) {
-            project.codeReviewers.push(fixedReviewer);
-            reviewers = reviewers.filter(reviewer => reviewer.name !== fixedReviewer);
-            assignedReviewers.add(fixedReviewer);
-          }
+        if (project.fixedReviewer) {
+          // Assign the fixed reviewer
+          project.codeReviewers.push(project.fixedReviewer);
+          reviewers = reviewers.filter(reviewer => reviewer.name !== project.fixedReviewer);
+          assignedReviewers.add(project.fixedReviewer);
         }
       });
+      
     
       reviewers = reviewers.filter(reviewer => !assignedReviewers.has(reviewer.name));
     

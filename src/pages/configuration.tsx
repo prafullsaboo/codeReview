@@ -1,41 +1,99 @@
 import { useState, useEffect } from 'react';
 import { employees as initialEmployees, projects as initialProjects } from '../../src/pages/api/employees';
+import { AppDispatch } from '../store';
+import { useDispatch } from 'react-redux';
+import { setEmployees, setProjects } from '../store/projectSlice';
+import { useRouter } from 'next/router';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
-const MyComponent = () => {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
+const Configuration = () => {
+  const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
+  const [employees, setConfiguredEmployee] = useState<any[]>([]);
+  const [projects, setConfiguredProjects] = useState<any[]>([]);
   const [exceptions, setExceptions] = useState<string[]>([]);
+  const [totalSelectedReviewers, setTotalSelectedReviewers] = useState(0);
+  const [error, setError] = useState<string[]>([]);
+
+  const availableReviewers = employees.filter(emp => emp.isAllowedToReview).length;
+
 
   useEffect(() => {
-    setEmployees(initialEmployees);
-    setProjects(initialProjects);
+    setConfiguredEmployee(initialEmployees);
+    setConfiguredProjects(initialProjects);
   }, []);
 
-  // Handle updates for the number of reviewers required for each project
   const handleReviewerCountChange = (index: number, value: number) => {
+    // const newProjects = [...projects];
+    // const updatedProject = { ...newProjects[index] };
+    // updatedProject.noOfReviwersRequirred = value;     
+    // newProjects[index] = updatedProject;
+    // setConfiguredProjects(newProjects);
     const newProjects = [...projects];
-    newProjects[index].noOfReviwersRequirred = value;
-    setProjects(newProjects);
+
+    // Calculate the total reviewers selected across other projects (excluding the current one)
+    const currentTotal = newProjects.reduce((sum, proj, idx) => {
+      return idx === index ? sum : sum + (proj.noOfReviwersRequirred || 0);
+    }, 0);
+
+    // Check if the total exceeds the available reviewers
+    if (currentTotal + value > availableReviewers) {
+      const newErrors = [...error];
+      newErrors[index] = 'Reviewers exceeding available limit';
+      setError(newErrors);
+      return;
+    }
+
+    // Clear the error if within the available limit
+    const newErrors = [...error];
+    newErrors[index] = '';  // Clear the error for the current project
+    setError(newErrors);
+
+    newProjects[index] = {
+      ...newProjects[index],
+      noOfReviwersRequirred: value,
+    };
+
+    setConfiguredProjects(newProjects);
+
+
   };
 
-  // Handle updates for assigning fixed reviewers
+
   const handleFixedReviewerChange = (projectIndex: number, reviewerName: string) => {
     const newProjects = [...projects];
-    if (!newProjects[projectIndex].fixedReviewers) {
-      newProjects[projectIndex].fixedReviewers = [];
-    }
-    newProjects[projectIndex].fixedReviewers = [reviewerName];
-    setProjects(newProjects);
+    newProjects[projectIndex].fixedReviewer = reviewerName;
+    setConfiguredProjects(newProjects);
   };
 
-  // Handle changes for whether senior devs are required
+  const handleCurrentProjectChange = (index: number, value: string) => {
+    const updatedEmployees = [...employees];
+    updatedEmployees[index] = {
+      ...updatedEmployees[index],
+      currentProject: value
+    };
+    setConfiguredEmployee(updatedEmployees);
+  };
+
   const handleSeniorDevChange = (index: number, checked: boolean) => {
     const newProjects = [...projects];
-    newProjects[index].isBigProject = checked;
-    setProjects(newProjects);
+    newProjects[index] = {
+      ...newProjects[index],
+      isBigProject: checked
+    };
+    setConfiguredProjects(newProjects);
   };
 
-  // Handle changes for exceptions (employees not allowed to review)
   const handleExceptionChange = (employeeName: string, checked: boolean) => {
     const updatedExceptions = checked
       ? [...exceptions, employeeName]
@@ -43,56 +101,43 @@ const MyComponent = () => {
     setExceptions(updatedExceptions);
   };
 
-  // Handle updates for 'Is Admin' field for employees
   const handleAdminChange = (index: number, checked: boolean) => {
     const updatedEmployees = [...employees];
-    updatedEmployees[index].isAdmin = checked;
-    setEmployees(updatedEmployees);
+    updatedEmployees[index] = {
+      ...updatedEmployees[index],
+      isAdmin: checked
+    };
+    setConfiguredEmployee(updatedEmployees);
   };
 
-  // Handle updates for 'Is Allowed to Review' field for employees
   const handleAllowedToReviewChange = (index: number, checked: boolean) => {
     const updatedEmployees = [...employees];
-    updatedEmployees[index].isAllowedToReview = checked;
-    setEmployees(updatedEmployees);
+    const updatedEmployee = { ...updatedEmployees[index] };
+    updatedEmployee.isAllowedToReview = checked;
+    updatedEmployees[index] = updatedEmployee;
+    setConfiguredEmployee(updatedEmployees);
   };
 
-//   // Save changes (you can later connect this to an API if needed)
-//   const handleSave = () => {
-//     console.log('Updated Projects:', projects);
-//     console.log('Updated Employees:', employees);
-//     console.log('Updated Exceptions:', exceptions);
-//     // In a real-world scenario, you'd send this data to an API or update the local JSON.
-//   };
-const handleSave = async () => {
-    const updatedData = {
-      employees,
-      projects,
-      exceptions,
-    };
-  
-    try {
-      const response = await fetch('/api/updateData', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedData),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to update data');
-      }
-  
-      const result = await response.json();
-      console.log('Data updated successfully:', result);
-    } catch (error) {
-      console.error('Error updating data:', error);
-    }
+  const handleSave = () => {
+    console.log('Updated Projects:', projects);
+    console.log('Updated Employees:', employees);
+    console.log('Updated Exceptions:', exceptions);
+    dispatch(setProjects(projects));
+    dispatch(setEmployees(employees));
   };
+
+  const handleBack = () => {
+    router.push('/home');
+  };
+
+  const uniqueProjects = Array.from(new Set(projects.map(p => p.name)));
+  const getAllowedReviewersCount = () => {
+    return employees.filter(emp => emp.isAllowedToReview).length;
+  };
+
 
   return (
-    <div className="container">
+    <div className="ccontainer container-configuration">
       <h1>Project and Employee Management</h1>
 
       {/* Projects Table */}
@@ -111,31 +156,69 @@ const handleSave = async () => {
             <tr key={index}>
               <td>{project.name}</td>
               <td>
-                <input
-                  type="number"
-                  value={project.noOfReviwersRequirred}
-                  min="1"
+                {/* <select
+                 value={project.noOfReviwersRequirred}
                   onChange={(e) => handleReviewerCountChange(index, parseInt(e.target.value))}
-                />
-              </td>
-              <td>
-                <select
-                  onChange={(e) => handleFixedReviewerChange(index, e.target.value)}
-                  value={project.fixedReviewers?.[0] || ''}
-                >
-                  <option value="">Select Reviewer</option>
-                  {employees.map((employee) => (
-                    <option key={employee.name} value={employee.name}>
-                      {employee.name}
+>
+                  {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
+                  <option key={option} value={option}>
+                    {option}
                     </option>
-                  ))}
-                </select>
+                ))}
+              </select> */}
+                {/* <Select>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select a fruit" defaultValue={project.noOfReviwersRequirred}/>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Fruits</SelectLabel>
+          <SelectItem value="apple">Apple</SelectItem>
+          <SelectItem value="banana">Banana</SelectItem>
+          <SelectItem value="blueberry">Blueberry</SelectItem>
+          <SelectItem value="grapes">Grapes</SelectItem>
+          <SelectItem value="pineapple">Pineapple</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select> */}
+                <Select value={String(project.noOfReviwersRequirred)} onValueChange={(value) => handleReviewerCountChange(index, parseInt(value))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select number of reviewers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
+                      <SelectItem key={option} value={String(option)}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {error[index] && <p className="text-red-500">{error[index]}</p>}
               </td>
               <td>
-                <input
-                  type="checkbox"
+                <Select
+                  value={project.fixedReviewer || "none"}
+                  onValueChange={(value) =>
+                    handleFixedReviewerChange(index, value === "none" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Reviewer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select Reviewer</SelectItem>
+                    {employees.map((employee) => (
+                      <SelectItem key={employee.name} value={employee.name}>
+                        {employee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </td>
+              <td>
+                <Checkbox
                   checked={project.isBigProject}
-                  onChange={(e) => handleSeniorDevChange(index, e.target.checked)}
+                  onCheckedChange={(checked) => handleSeniorDevChange(index, !!checked)}
                 />
               </td>
             </tr>
@@ -161,58 +244,54 @@ const handleSave = async () => {
             <tr key={index}>
               <td>{employee.name}</td>
               <td>{employee.email}</td>
-              <td>{employee.currentProject || 'None'}</td>
+              <td>
+                <Select
+                  value={employee.currentProject || "none"}
+                  onValueChange={(value) =>
+                    handleCurrentProjectChange(index, value === "none" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {uniqueProjects.map((projectName) => (
+                      <SelectItem key={projectName} value={projectName}>
+                        {projectName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </td>
               <td>{employee.designation}</td>
               <td>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={employee.isAdmin}
-                  onChange={(e) => handleAdminChange(index, e.target.checked)}
+                  onCheckedChange={(checked) => handleAdminChange(index, !!checked)}
                 />
               </td>
               <td>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={employee.isAllowedToReview}
-                  onChange={(e) => handleAllowedToReviewChange(index, e.target.checked)}
+                  onCheckedChange={(checked) => handleAllowedToReviewChange(index, !!checked)}
                 />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className='flex items-center justify-center mb-5 gap-8'>
+        <Button onClick={handleSave} className="save-button">
+          Save Changes
+        </Button>
+        <Button onClick={handleBack} variant="outline" className="save-button">
+          Back
+        </Button>
 
-      {/* Employees Exception Section
-      <h2>Reviewing Exceptions</h2>
-<table className="styled-table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Mark as Exception</th>
-    </tr>
-  </thead>
-  <tbody>
-    {employees.map((employee, index) => (
-      <tr key={index}>
-        <td>{employee.name}</td>
-        <td>
-          <input
-            type="checkbox"
-            checked={exceptions.includes(employee.name)}
-            onChange={(e) => handleExceptionChange(employee.name, e.target.checked)}
-          />
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table> */}
-
-      {/* Save Button */}
-      <button className="save-button" onClick={handleSave}>
-        Save Changes
-      </button>
+      </div>
     </div>
   );
 };
 
-export default MyComponent;
+export default Configuration;
