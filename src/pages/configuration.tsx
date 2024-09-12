@@ -1,5 +1,5 @@
+"use client";
 import { useState, useEffect } from 'react';
-import { employees as initialEmployees, projects as initialProjects } from '../../src/pages/api/employees';
 import { AppDispatch } from '../store';
 import { useDispatch } from 'react-redux';
 import { setEmployees, setProjects } from '../store/projectSlice';
@@ -21,32 +21,54 @@ const Configuration = () => {
   const router = useRouter();
   const [employees, setConfiguredEmployee] = useState<any[]>([]);
   const [projects, setConfiguredProjects] = useState<any[]>([]);
+  const [initialEmployees, setInitialEmployees] = useState<any[]>([]);
+  const [initialProjects, setInitialProjects] = useState<any[]>([]);
   const [exceptions, setExceptions] = useState<string[]>([]);
   const [totalSelectedReviewers, setTotalSelectedReviewers] = useState(0);
   const [error, setError] = useState<string[]>([]);
 
   const availableReviewers = employees.filter(emp => emp.isAllowedToReview).length;
 
-
   useEffect(() => {
-    setConfiguredEmployee(initialEmployees);
-    setConfiguredProjects(initialProjects);
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
+
+        // Check if the response is ok
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+
+
+        const employeesData = data.employees || [];
+        const projectsData = data.projects || [];
+
+        setConfiguredEmployee(employeesData);
+        setConfiguredProjects(projectsData);
+        localStorage.setItem('employees', JSON.stringify(employeesData));
+        localStorage.setItem('projects', JSON.stringify(projectsData));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        console.warn('Data fetched successfully');
+      }
+    };
+
+    fetchData();
   }, []);
 
+
+
   const handleReviewerCountChange = (index: number, value: number) => {
-    // const newProjects = [...projects];
-    // const updatedProject = { ...newProjects[index] };
-    // updatedProject.noOfReviwersRequirred = value;     
-    // newProjects[index] = updatedProject;
-    // setConfiguredProjects(newProjects);
+
     const newProjects = [...projects];
 
-    // Calculate the total reviewers selected across other projects (excluding the current one)
     const currentTotal = newProjects.reduce((sum, proj, idx) => {
       return idx === index ? sum : sum + (proj.noOfReviwersRequirred || 0);
     }, 0);
 
-    // Check if the total exceeds the available reviewers
     if (currentTotal + value > availableReviewers) {
       const newErrors = [...error];
       newErrors[index] = 'Reviewers exceeding available limit';
@@ -54,9 +76,9 @@ const Configuration = () => {
       return;
     }
 
-    // Clear the error if within the available limit
+
     const newErrors = [...error];
-    newErrors[index] = '';  // Clear the error for the current project
+    newErrors[index] = '';
     setError(newErrors);
 
     newProjects[index] = {
@@ -118,12 +140,33 @@ const Configuration = () => {
     setConfiguredEmployee(updatedEmployees);
   };
 
-  const handleSave = () => {
-    console.log('Updated Projects:', projects);
-    console.log('Updated Employees:', employees);
-    console.log('Updated Exceptions:', exceptions);
+  const handleSave = async () => {
     dispatch(setProjects(projects));
     dispatch(setEmployees(employees));
+    try {
+      const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employees: employees,
+          projects: projects,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const result = await response.json();
+      console.log('Data posted successfully:', result);
+    } catch (error) {
+      console.error('Error posting data:', error);
+    }
+    finally {
+      console.warn('Data posted successfully');
+    };
   };
 
   const handleBack = () => {
@@ -156,31 +199,6 @@ const Configuration = () => {
             <tr key={index}>
               <td>{project.name}</td>
               <td>
-                {/* <select
-                 value={project.noOfReviwersRequirred}
-                  onChange={(e) => handleReviewerCountChange(index, parseInt(e.target.value))}
->
-                  {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                    </option>
-                ))}
-              </select> */}
-                {/* <Select>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select a fruit" defaultValue={project.noOfReviwersRequirred}/>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Fruits</SelectLabel>
-          <SelectItem value="apple">Apple</SelectItem>
-          <SelectItem value="banana">Banana</SelectItem>
-          <SelectItem value="blueberry">Blueberry</SelectItem>
-          <SelectItem value="grapes">Grapes</SelectItem>
-          <SelectItem value="pineapple">Pineapple</SelectItem>
-        </SelectGroup>
-      </SelectContent>
-    </Select> */}
                 <Select value={String(project.noOfReviwersRequirred)} onValueChange={(value) => handleReviewerCountChange(index, parseInt(value))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select number of reviewers" />

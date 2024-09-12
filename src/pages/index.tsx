@@ -1,11 +1,12 @@
-import { use, useState } from 'react';
+"use client";
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { GetServerSideProps } from 'next';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store';
 import { setEmployees, setCurrentUser, setProjects } from '../store/projectSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
 interface Employee {
   name: string;
   email: string;
@@ -15,13 +16,7 @@ interface Employee {
   isAllowedToReview: boolean;
 }
 
-interface LoginProps {
-  employees: Employee[];
-  projects: any[];
-}
-
-const Login: React.FC<LoginProps> = ({ employees, projects }) => {
-
+const Login: React.FC = () => {
   const router = useRouter();
   const dispatch: AppDispatch = useDispatch();
 
@@ -29,6 +24,43 @@ const Login: React.FC<LoginProps> = ({ employees, projects }) => {
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
+  const [employees, setEmployeesState] = useState<Employee[]>([]);
+  const [projects, setProjectsState] = useState<any[]>([]);
+
+  useEffect(() => {
+    const employeesData = sessionStorage.getItem('employees');
+    const projectsData = sessionStorage.getItem('projects');
+
+    if (employeesData && projectsData) {
+      setEmployeesState(JSON.parse(employeesData));
+      setProjectsState(JSON.parse(projectsData));
+    } else {
+      const fetchData = async () => {
+        try {
+          const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
+          const fetchedEmployees = data.employees || [];
+          const fetchedProjects = data.projects || [];
+
+          setEmployeesState(fetchedEmployees);
+          setProjectsState(fetchedProjects);
+
+          sessionStorage.setItem('employees', JSON.stringify(fetchedEmployees));
+          sessionStorage.setItem('projects', JSON.stringify(fetchedProjects));
+
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      };
+
+      fetchData();
+    }
+  }, []);
 
   const handleLogin = () => {
     const user = employees.find((user) => user.email === email);
@@ -57,7 +89,6 @@ const Login: React.FC<LoginProps> = ({ employees, projects }) => {
     }
   };
 
-
   return (
     <div className="container mx-auto p-4 w-3/5 flex flex-col h-screen justify-center">
       <h2 className="mb-5 text-lg text-white">Founder and Lightning</h2>
@@ -69,7 +100,7 @@ const Login: React.FC<LoginProps> = ({ employees, projects }) => {
           type="email"
           placeholder="Enter your email"
           value={email}
-          onChange={(e: any) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           className="border border-gray-300 bg-white p-2 w-full text-gray-900"
         />
         {isAdmin && (
@@ -88,18 +119,6 @@ const Login: React.FC<LoginProps> = ({ employees, projects }) => {
       </div>
     </div>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employees`);
-  const { employees, projects } = await res.json();
-
-  return {
-    props: {
-      employees,
-      projects,
-    },
-  };
 };
 
 export default Login;

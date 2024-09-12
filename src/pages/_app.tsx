@@ -7,20 +7,19 @@ import '../../src/app/globals.css';
 
 function CodeReviewRotationApp({ Component, pageProps }: { Component: React.ElementType, pageProps: any }) {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
 
 
   return (
     <Provider store={store}>
-     
-        <>
+
+      <>
         <PersistGate loading={null} persistor={persistor}>
           <div className="body-custom text-gray-900 bg-white min-h-screen">
             <Component {...pageProps} />
           </div>
         </PersistGate>
-        </>
-      
+      </>
+
     </Provider>
   );
 }

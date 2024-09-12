@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { RootState, AppDispatch } from '../store';
-import { selectCurrentUser, selectEmployees, selectEmployeesWithoutProjects, selectEmployeesExemptedFromReview, selectProjectDetails, selectProjects, setProjects, shuffleReviewers, selectEmployeeProjectReviewDetails } from '../store/projectSlice';
+import { selectCurrentUser, selectEmployees, selectEmployeesWithoutProjects, selectEmployeesExemptedFromReview, selectProjectDetails, selectProjects, setProjects, shuffleReviewers, selectEmployeeProjectReviewDetails, setEmployees, setCurrentUser } from '../store/projectSlice';
 import { useSpring, useTransition, animated } from 'react-spring';
 import Confetti from 'react-dom-confetti';
-import { isEqual } from 'lodash';
 import { Button } from '@/components/ui/button';
 
 interface Project {
@@ -29,9 +28,6 @@ const Home: React.FC = () => {
   const employeesExemptedFromReview = useSelector((state: RootState) => selectEmployeesExemptedFromReview(state));
   const employeeProjectReviewDetails = useSelector((state: RootState) => selectEmployeeProjectReviewDetails(state));
 
-  const deepCompare = (obj1: any, obj2: any) => {
-    return JSON.stringify(obj1) === JSON.stringify(obj2);
-  };
 
   useEffect(() => {
     if (employees.length > 0) {
@@ -49,14 +45,6 @@ const Home: React.FC = () => {
       dispatch(setProjects(initialProjects));
     }
   }, [dispatch]);
-
-  const transitions = useTransition(projects, {
-    key: (project: any) => project.name,
-    from: { opacity: 0, transform: 'translate3d(0,-20px,0)' },
-    enter: { opacity: 1, transform: 'translate3d(0,0px,0)' },
-    leave: { opacity: 0, transform: 'translate3d(0,-20px,0)' },
-    onRest: () => setAnimateRows(false),
-  });
 
   const handleShuffle = () => {
     if (currentUser?.isAdmin) {
