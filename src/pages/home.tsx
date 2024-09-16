@@ -31,6 +31,7 @@ const Home: React.FC = () => {
         currentDevelopers: currentDevelopers.length > 0 ? currentDevelopers : [],
         codeReviewers: proj.reviewers,
         fixedReviewer: proj.fixedReviewer,
+        reviewers: proj.reviewers,
       };
     });
     dispatch(setProjects(initialProjects));
