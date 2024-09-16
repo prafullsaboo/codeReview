@@ -18,7 +18,9 @@ interface Project {
   codeReviewers?: string[];
   fixedReviewer?: string;
   reviewers?: string[];
+  previousReviewers?: string[];
 }
+
 
 interface ProjectsState {
   projects: Project[];
@@ -49,40 +51,19 @@ const projectReviewSlice = createSlice({
       const projects = state.projects;
       let reviewers = state.employees.filter(emp => emp.isAllowedToReview);
     
+      // Shuffle reviewers
       for (let i = reviewers.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [reviewers[i], reviewers[j]] = [reviewers[j], reviewers[i]];
       }
     
       // Fixed reviewer assignments
-      // const fixedReviewerAssignments: { [key: string]: string } = {
-      //   "Clientshare Premium": "Vishal",
-      //   "Governance": "Tomek",
-      // };
-    
-      // const assignedReviewers = new Set<string>();
-    
-      // // Assign fixed reviewers first
-      // projects.forEach(project => {
-      //   if (project.name) {
-      //     project.codeReviewers = [];
-    
-      //     // Check if the project has a fixed reviewer
-      //     const fixedReviewer = fixedReviewerAssignments[project.name];
-      //     if (fixedReviewer) {
-      //       project.codeReviewers.push(fixedReviewer);
-      //       reviewers = reviewers.filter(reviewer => reviewer.name !== fixedReviewer);
-      //       assignedReviewers.add(fixedReviewer);
-      //     }
-      //   }
-      // });
-
       const assignedReviewers = new Set<string>();
-
+    
       // Assign fixed reviewers from project properties
       projects.forEach(project => {
         project.codeReviewers = [];
-    
+        
         if (project.fixedReviewer) {
           // Assign the fixed reviewer
           project.codeReviewers.push(project.fixedReviewer);
@@ -90,13 +71,12 @@ const projectReviewSlice = createSlice({
           assignedReviewers.add(project.fixedReviewer);
         }
       });
-      
     
       reviewers = reviewers.filter(reviewer => !assignedReviewers.has(reviewer.name));
     
       projects.forEach(project => {
         if (project.name) {
-          const reviewersNeeded = project.noOfReviwersRequirred; 
+          const reviewersNeeded = project.noOfReviwersRequirred;
     
           for (let i = 0; i < reviewers.length; i++) {
             const assignedReviewer = reviewers[i];
@@ -105,12 +85,13 @@ const projectReviewSlice = createSlice({
               assignedReviewer &&
               !project.currentDevelopers.includes(assignedReviewer.name) &&
               !project?.codeReviewers?.includes(assignedReviewer.name) &&
-              (!project.isBigProject || assignedReviewer.designation === "Senior Developer")
-            ) {
+              (!project.isBigProject || assignedReviewer.designation === "Senior Developer") &&
+              !project.previousReviewers?.includes(assignedReviewer.name)
+                ) {
               project?.codeReviewers?.push(assignedReviewer.name);
               reviewers.splice(i, 1);
               assignedReviewers.add(assignedReviewer.name);
-              i--; 
+              i--;
             }
     
             if (project.codeReviewers && project.codeReviewers.length >= reviewersNeeded) break;
@@ -138,7 +119,8 @@ const projectReviewSlice = createSlice({
                  project.codeReviewers.length < project.noOfReviwersRequirred && 
                  !project.codeReviewers.includes(reviewer.name) &&
                  !project.currentDevelopers.includes(reviewer.name) &&
-                 (!project.isBigProject || reviewer.designation === "Senior Developer"); 
+                 (!project.isBigProject || reviewer.designation === "Senior Developer") &&
+                 !project.previousReviewers?.includes(reviewer.name); // Ensure the reviewer hasn't reviewed before
         });
     
         if (availableProjects.length > 0) {
@@ -161,7 +143,8 @@ const projectReviewSlice = createSlice({
             const availableReviewers = state.employees.filter(emp =>
               emp.isAllowedToReview &&
               !project.codeReviewers?.includes(emp.name) &&
-              (!project.isBigProject || emp.designation === "Senior Developer")
+              (!project.isBigProject || emp.designation === "Senior Developer") &&
+              !project.previousReviewers?.includes(emp.name) // Ensure the reviewer hasn't reviewed before
             );
     
             if (availableReviewers.length > 0) {
@@ -172,6 +155,7 @@ const projectReviewSlice = createSlice({
         }
       });
     }
+    
     
   },
 });

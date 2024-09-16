@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import Loader from '@/components/loader';
 
 const Configuration = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -158,6 +159,7 @@ const Configuration = () => {
 
       const result = await response.json();
       setIsLoading(false);
+      router.push('/home');
       console.log('Data posted successfully:', result);
     } catch (error) {
       console.error('Error posting data:', error);
@@ -178,129 +180,135 @@ const Configuration = () => {
 
 
   return (
-    <div className="ccontainer container-configuration">
-      <h1>Project and Employee Management</h1>
+    <>
+      {isLoading && <Loader />}
+      <div className="container container-configuration">
+        <h1 className='text-2xl font-semibold text-gray-800 mb-4'>
+          Project and Employee Management
+        </h1>
 
-      {/* Projects Table */}
-      <h2>Projects</h2>
-      <table className="styled-table">
-        <thead>
-          <tr>
-            <th>Project Name</th>
-            <th>No of Reviewers Required</th>
-            <th>Fixed Reviewer</th>
-            <th>Senior Dev Required</th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((project, index) => (
-            <tr key={index}>
-              <td>{project.name}</td>
-              <td>
-                <Select value={String(project.noOfReviwersRequirred)} onValueChange={(value) => handleReviewerCountChange(index, parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select number of reviewers" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
-                      <SelectItem key={option} value={String(option)}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {error[index] && <p className="text-red-500">{error[index]}</p>}
-              </td>
-              <td>
-                <Select
-                  value={project.fixedReviewer || "none"}
-                  onValueChange={(value) => handleFixedReviewerChange(index, value === "none" ? "" : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Reviewer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select Reviewer</SelectItem>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.name} value={employee.name}>
-                        {employee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </td>
-              <td>
-                <Checkbox
-                  checked={project.isBigProject}
-                  onCheckedChange={(checked) => handleSeniorDevChange(index, !!checked)} />
-              </td>
+        <h2 className='text-xl font-medium text-gray-700 mb-3'>
+          Projects
+        </h2>
+        <table className="styled-table">
+          <thead>
+            <tr>
+              <th>Project Name</th>
+              <th>No of Reviewers Required</th>
+              <th>Fixed Reviewer</th>
+              <th>Senior Dev Required</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {projects.map((project, index) => (
+              <tr key={index}>
+                <td>{project.name}</td>
+                <td>
+                  <Select value={String(project.noOfReviwersRequirred)} onValueChange={(value) => handleReviewerCountChange(index, parseInt(value))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select number of reviewers" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
+                        <SelectItem key={option} value={String(option)}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {error[index] && <p className="text-red-500">{error[index]}</p>}
+                </td>
+                <td>
+                  <Select
+                    value={project.fixedReviewer || "none"}
+                    onValueChange={(value) => handleFixedReviewerChange(index, value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Reviewer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Select Reviewer</SelectItem>
+                      {employees.map((employee) => (
+                        <SelectItem key={employee.name} value={employee.name}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td>
+                  <Checkbox
+                    checked={project.isBigProject}
+                    onCheckedChange={(checked) => handleSeniorDevChange(index, !!checked)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      {/* Employees Table */}
-      <h2>Employees</h2>
-      <table className="styled-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Current Project</th>
-            <th>Designation</th>
-            <th>Is Admin</th>
-            <th>Is Allowed to Review</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map((employee, index) => (
-            <tr key={index}>
-              <td>{employee.name}</td>
-              <td>{employee.email}</td>
-              <td>
-                <Select
-                  value={employee.currentProject || "none"}
-                  onValueChange={(value) => handleCurrentProjectChange(index, value === "none" ? "" : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {uniqueProjects.map((projectName) => (
-                      <SelectItem key={projectName} value={projectName}>
-                        {projectName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </td>
-              <td>{employee.designation}</td>
-              <td>
-                <Checkbox
-                  checked={employee.isAdmin}
-                  onCheckedChange={(checked) => handleAdminChange(index, !!checked)} />
-              </td>
-              <td>
-                <Checkbox
-                  checked={employee.isAllowedToReview}
-                  onCheckedChange={(checked) => handleAllowedToReviewChange(index, !!checked)} />
-              </td>
+        <h2 className='text-2xl font-semibold text-gray-800 mb-4'>Employees</h2>
+        <table className="styled-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Current Project</th>
+              <th>Designation</th>
+              <th>Is Admin</th>
+              <th>Is Allowed to Review</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className='flex items-center justify-center mb-5 gap-8'>
-        <Button onClick={handleSave} className="save-button">
-          Save Changes
-        </Button>
-        <Button onClick={handleBack} variant="outline" className="save-button">
-          Back
-        </Button>
+          </thead>
+          <tbody>
+            {employees.map((employee, index) => (
+              <tr key={index}>
+                <td>{employee.name}</td>
+                <td>{employee.email}</td>
+                <td>
+                  <Select
+                    value={employee.currentProject || "none"}
+                    onValueChange={(value) => handleCurrentProjectChange(index, value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {uniqueProjects.map((projectName) => (
+                        <SelectItem key={projectName} value={projectName}>
+                          {projectName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td>{employee.designation}</td>
+                <td>
+                  <Checkbox
+                    checked={employee.isAdmin}
+                    onCheckedChange={(checked) => handleAdminChange(index, !!checked)} />
+                </td>
+                <td>
+                  <Checkbox
+                    checked={employee.isAllowedToReview}
+                    onCheckedChange={(checked) => handleAllowedToReviewChange(index, !!checked)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className='flex items-center justify-center mb-5 gap-8'>
+          <Button onClick={handleSave} className="save-button">
+            Save Changes
+          </Button>
+          <Button onClick={handleBack} variant="outline" className="save-button">
+            Back
+          </Button>
 
+        </div>
       </div>
-    </div>
+    </>
   );
+
 };
 
 export default Configuration;

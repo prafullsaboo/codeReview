@@ -134,7 +134,7 @@ const Home: React.FC = () => {
           </Button>
         )}
       </div>
-      <table className="min-w-full bg-white border border-gray-300">
+      <table className="styled-table">
         <thead>
           <tr>
             <th className="py-2 px-4 border border-gray-500">Project</th>
