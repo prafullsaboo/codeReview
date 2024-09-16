@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import projectReviewReducer from './projectSlice';
 import storage from 'redux-persist/lib/storage';
 import { FLUSH, PAUSE, PERSIST, persistReducer, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
 import { persistStore } from 'redux-persist';
+import projectReviewReducer from './projectSlice';
 
 const persistConfig = {
   key: 'root',

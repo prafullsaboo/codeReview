@@ -26,40 +26,33 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [employees, setEmployeesState] = useState<Employee[]>([]);
   const [projects, setProjectsState] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const employeesData = sessionStorage.getItem('employees');
-    const projectsData = sessionStorage.getItem('projects');
 
-    if (employeesData && projectsData) {
-      setEmployeesState(JSON.parse(employeesData));
-      setProjectsState(JSON.parse(projectsData));
-    } else {
-      const fetchData = async () => {
-        try {
-          const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
 
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-
-          const data = await response.json();
-          const fetchedEmployees = data.employees || [];
-          const fetchedProjects = data.projects || [];
-
-          setEmployeesState(fetchedEmployees);
-          setProjectsState(fetchedProjects);
-
-          sessionStorage.setItem('employees', JSON.stringify(fetchedEmployees));
-          sessionStorage.setItem('projects', JSON.stringify(fetchedProjects));
-
-        } catch (error) {
-          console.error('Error fetching data:', error);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
-      };
 
-      fetchData();
-    }
+        const data = await response.json();
+        const fetchedEmployees = data.employees || [];
+        const fetchedProjects = data.projects || [];
+        setIsLoading(false);
+        setEmployeesState(fetchedEmployees);
+        setProjectsState(fetchedProjects);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleLogin = () => {
@@ -67,9 +60,9 @@ const Login: React.FC = () => {
 
     if (user) {
       dispatch(setCurrentUser(user));
+      localStorage.setItem('currentUser', JSON.stringify(user));
       dispatch(setEmployees(employees));
       dispatch(setProjects(projects));
-
       setIsAdmin(user.isAdmin);
 
       if (user.isAdmin) {

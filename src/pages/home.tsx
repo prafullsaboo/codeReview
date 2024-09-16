@@ -7,19 +7,11 @@ import { useSpring, useTransition, animated } from 'react-spring';
 import Confetti from 'react-dom-confetti';
 import { Button } from '@/components/ui/button';
 
-interface Project {
-  name: string;
-  currentDevelopers: string[];
-  isBigProject: boolean;
-  codeReviewers?: string[];
-  reviewers?: string[];
-}
-
 const Home: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
   const [animateShuffle, setAnimateShuffle] = useState(false);
-  const [animateRows, setAnimateRows] = useState(false);
+
   const projects = useSelector(selectProjects);
   const employees = useSelector(selectEmployees);
   const currentUser = useSelector(selectCurrentUser);
@@ -28,36 +20,103 @@ const Home: React.FC = () => {
   const employeesExemptedFromReview = useSelector((state: RootState) => selectEmployeesExemptedFromReview(state));
   const employeeProjectReviewDetails = useSelector((state: RootState) => selectEmployeeProjectReviewDetails(state));
 
+  useEffect(() => {
+
+    const initialProjects = projects.map(proj => {
+      const currentDevelopers = employees
+        .filter(emp => emp.currentProject === proj.name)
+        .map(emp => emp.name);
+      return {
+        ...proj,
+        currentDevelopers: currentDevelopers.length > 0 ? currentDevelopers : [],
+        codeReviewers: proj.reviewers,
+        fixedReviewer: proj.fixedReviewer,
+      };
+    });
+    dispatch(setProjects(initialProjects));
+
+  }, [dispatch, employees]);
 
   useEffect(() => {
-    if (employees.length > 0) {
-      const initialProjects = projects.map(proj => {
-        const currentDevelopers = employees
-          .filter(emp => emp.currentProject === proj.name)
-          .map(emp => emp.name);
-        return {
-          ...proj,
-          currentDevelopers: currentDevelopers.length > 0 ? currentDevelopers : [],
-          codeReviewers: proj.reviewers,
-          fixedReviewer: proj.fixedReviewer,
-        };
-      });
-      dispatch(setProjects(initialProjects));
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      dispatch(setCurrentUser(JSON.parse(user)));
     }
   }, [dispatch]);
 
-  const handleShuffle = () => {
-    if (currentUser?.isAdmin) {
-      dispatch(shuffleReviewers());
+  useEffect(() => {
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        const fetchedEmployees = data.employees || [];
+        const fetchedProjects = data.projects || [];
+        const user = employees.find((user) => user.email === fetchedEmployees[0].email);
+        dispatch(setEmployees(fetchedEmployees));
+        dispatch(setProjects(fetchedProjects));
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (projectDetails.length > 0) {
+    }
+  }, [projectDetails]);
+
+  const handleShuffle = async () => {
+    try {
+      await dispatch(shuffleReviewers() as any);
       setAnimateShuffle(true);
-      setTimeout(() => {
-        setAnimateShuffle(false);
-      }, 2000);
+    } catch (error) {
+      console.error('Error during shuffle:', error);
     }
   };
+
+  useEffect(() => {
+    const postProjectDetails = async () => {
+      try {
+
+        const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employees: employees,
+            projects: projectDetails,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+        console.log('Data posted successfully:', result);
+      } catch (error) {
+        console.error('Error posting data:', error);
+      } finally {
+        console.warn('Data posting attempt finished');
+      }
+    };
+    postProjectDetails();
+  }, [projectDetails, employees]);
+
   const handleLogout = () => {
     router.push('/');
   };
+
   const handleConfiguration = () => {
     router.push('/configuration');
   };
@@ -69,10 +128,11 @@ const Home: React.FC = () => {
         <Button onClick={handleLogout} className="w-1/4 bg-blue-500 text-white rounded hover:bg-blue-700">
           Log out
         </Button>
-        {currentUser?.isAdmin && <Button onClick={handleConfiguration} className="w-1/4 bg-blue-500 text-white rounded hover:bg-blue-700">
-          Change Configuration
-        </Button>
-        }
+        {currentUser?.isAdmin && (
+          <Button onClick={handleConfiguration} className="w-1/4 bg-blue-500 text-white rounded hover:bg-blue-700">
+            Change Configuration
+          </Button>
+        )}
       </div>
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
@@ -85,7 +145,7 @@ const Home: React.FC = () => {
         <tbody>
           {projectDetails.map((project, index) => (
             <tr key={index}>
-              <td className="py-2 px-4 border border-gray-500">{project.projectName}</td>
+              <td className="py-2 px-4 border border-gray-500">{project.name}</td>
               <td className="py-2 px-4 border border-gray-500">{project.currentDevelopers?.join(', ')}</td>
               <td className="py-2 px-4 border border-gray-500">
                 {project.reviewers?.join(', ')}
@@ -93,22 +153,6 @@ const Home: React.FC = () => {
             </tr>
           ))}
         </tbody>
-        {/* <thead>
-          <tr>
-            <th className="border border-gray-500 px-4 py-2">Employee Name</th>
-            <th className="border border-gray-500 px-4 py-2">Current Project</th>
-            <th className="border border-gray-500 px-4 py-2">Reviewing Projects</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employeeProjectReviewDetails.map(emp => (
-            <tr key={emp.name}>
-              <td className="border border-gray-500 px-4 py-2">{emp.name}</td>
-              <td className="border border-gray-500 px-4 py-2">{emp.currentProject}</td>
-              <td className="border border-gray-500 px-4 py-2">{emp.reviewingProjects}</td>
-            </tr>
-          ))}
-        </tbody> */}
       </table>
       {currentUser?.isAdmin && (
         <div className="min-w-full flex justify-center items-center">

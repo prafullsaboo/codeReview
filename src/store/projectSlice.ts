@@ -182,28 +182,29 @@ export const selectProjects = (state: RootState) => state.projectReview.projects
 export const selectEmployees = (state: RootState) => state.projectReview.employees;
 export const selectCurrentUser = (state: RootState) => state.projectReview.currentUser;
 
-// Selector to get project details with proper formatting
 export const selectProjectDetails = (state: RootState) => {
   const projectDetails = state.projectReview.projects.reduce((acc, project) => {
     if (project.name) {
-      const existingProject = acc.find(p => p.projectName === project.name);
+      const existingProject = acc.find(p => p.name === project.name);
       if (existingProject) {
         existingProject.reviewers.push(...(project.codeReviewers || []));
       } else {
         acc.push({
-          projectName: project.name,
+          name: project.name,
           currentDevelopers: project.currentDevelopers,
-          reviewers: project.codeReviewers || []
+          reviewers: project.codeReviewers || [],
+          noOfReviwersRequirred: project.noOfReviwersRequirred,
+          isBigProject : project.isBigProject,
+          fixedReviewer: project.fixedReviewer || '',
         });
       }
     }
     return acc;
-  }, [] as { projectName: string, currentDevelopers: string[], reviewers: string[] }[]);
+  }, [] as { name: string, currentDevelopers: string[], reviewers: string[], noOfReviwersRequirred: number,isBigProject : boolean, fixedReviewer : string  }[]);
   
   return projectDetails;
 }; 
 
-//Selector to get data as per name of employee
 export const selectEmployeeProjectReviewDetails = (state: RootState) => {
   const employees = state.projectReview.employees;
   const projects = state.projectReview.projects;

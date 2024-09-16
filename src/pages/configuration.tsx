@@ -26,15 +26,16 @@ const Configuration = () => {
   const [exceptions, setExceptions] = useState<string[]>([]);
   const [totalSelectedReviewers, setTotalSelectedReviewers] = useState(0);
   const [error, setError] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const availableReviewers = employees.filter(emp => emp.isAllowedToReview).length;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json');
 
-        // Check if the response is ok
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -44,11 +45,9 @@ const Configuration = () => {
 
         const employeesData = data.employees || [];
         const projectsData = data.projects || [];
-
+        setIsLoading(false);
         setConfiguredEmployee(employeesData);
         setConfiguredProjects(projectsData);
-        localStorage.setItem('employees', JSON.stringify(employeesData));
-        localStorage.setItem('projects', JSON.stringify(projectsData));
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -76,7 +75,6 @@ const Configuration = () => {
       return;
     }
 
-
     const newErrors = [...error];
     newErrors[index] = '';
     setError(newErrors);
@@ -87,8 +85,6 @@ const Configuration = () => {
     };
 
     setConfiguredProjects(newProjects);
-
-
   };
 
 
@@ -144,6 +140,7 @@ const Configuration = () => {
     dispatch(setProjects(projects));
     dispatch(setEmployees(employees));
     try {
+      setIsLoading(true);
       const response = await fetch('https://code-review-roataion-default-rtdb.firebaseio.com/.json', {
         method: 'PUT',
         headers: {
@@ -160,6 +157,7 @@ const Configuration = () => {
       }
 
       const result = await response.json();
+      setIsLoading(false);
       console.log('Data posted successfully:', result);
     } catch (error) {
       console.error('Error posting data:', error);
@@ -216,9 +214,7 @@ const Configuration = () => {
               <td>
                 <Select
                   value={project.fixedReviewer || "none"}
-                  onValueChange={(value) =>
-                    handleFixedReviewerChange(index, value === "none" ? "" : value)
-                  }
+                  onValueChange={(value) => handleFixedReviewerChange(index, value === "none" ? "" : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Reviewer" />
@@ -236,8 +232,7 @@ const Configuration = () => {
               <td>
                 <Checkbox
                   checked={project.isBigProject}
-                  onCheckedChange={(checked) => handleSeniorDevChange(index, !!checked)}
-                />
+                  onCheckedChange={(checked) => handleSeniorDevChange(index, !!checked)} />
               </td>
             </tr>
           ))}
@@ -265,9 +260,7 @@ const Configuration = () => {
               <td>
                 <Select
                   value={employee.currentProject || "none"}
-                  onValueChange={(value) =>
-                    handleCurrentProjectChange(index, value === "none" ? "" : value)
-                  }
+                  onValueChange={(value) => handleCurrentProjectChange(index, value === "none" ? "" : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select project" />
@@ -286,14 +279,12 @@ const Configuration = () => {
               <td>
                 <Checkbox
                   checked={employee.isAdmin}
-                  onCheckedChange={(checked) => handleAdminChange(index, !!checked)}
-                />
+                  onCheckedChange={(checked) => handleAdminChange(index, !!checked)} />
               </td>
               <td>
                 <Checkbox
                   checked={employee.isAllowedToReview}
-                  onCheckedChange={(checked) => handleAllowedToReviewChange(index, !!checked)}
-                />
+                  onCheckedChange={(checked) => handleAllowedToReviewChange(index, !!checked)} />
               </td>
             </tr>
           ))}
