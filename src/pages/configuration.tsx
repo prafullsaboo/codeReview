@@ -209,7 +209,7 @@ const Configuration = () => {
                       <SelectValue placeholder="Select number of reviewers" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 4 }, (_, i) => i + 1).map((option) => (
+                      {Array.from({ length: 5 }, (_, i) => i + 1).map((option) => (
                         <SelectItem key={option} value={String(option)}>
                           {option}
                         </SelectItem>
